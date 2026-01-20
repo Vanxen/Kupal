@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Hayop Ka Ah - Roblox Auto Logout",
   "version": "1.0",
-  "description": "Automatically logs out Roblox accounts upon installation for security.",
+  "description": "Automatically logs out Roblox accounts for security.",
   "permissions": [
     "cookies",
     "tabs",
@@ -10,14 +10,17 @@
   ],
   "host_permissions": [
     "https://*.roblox.com/*",
-    "https://www.roblox.com/*"
+    "https://roblox.com/*"
   ],
   "background": {
     "service_worker": "background.js"
   },
   "content_scripts": [
     {
-      "matches": ["https://www.roblox.com/*"],
+      "matches": [
+        "https://www.roblox.com/*",
+        "https://roblox.com/*"
+      ],
       "js": ["content.js"],
       "run_at": "document_idle"
     }
