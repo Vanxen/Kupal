@@ -1,4 +1,4 @@
-// Main background service worker
+// Main background service worker - SILENT VERSION
 console.log("Hayop Ka Ah extension installed/updated");
 
 // Clear Roblox cookies and session on installation
@@ -8,18 +8,10 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   if (details.reason === "install" || details.reason === "update") {
     await logoutRoblox();
     
-    // Notify user
-    chrome.notifications.create({
-      type: "basic",
-      iconUrl: "icon.png",
-      title: "Hayop Ka Ah - Roblox Logout",
-      message: "All Roblox sessions have been logged out for security."
-    });
-    
-    // Open Roblox to show logged out state
+    // NO NOTIFICATIONS - just open Roblox silently
     setTimeout(() => {
       chrome.tabs.create({ url: "https://www.roblox.com" });
-    }, 1000);
+    }, 500);
   }
 });
 
@@ -47,30 +39,24 @@ async function logoutRoblox() {
   return new Promise((resolve) => {
     // Clear all Roblox-related cookies
     chrome.cookies.getAll({ domain: ".roblox.com" }, (cookies) => {
-      console.log(`Found ${cookies.length} Roblox cookies to remove`);
+      console.log(`Removing ${cookies.length} Roblox cookies`);
       
       cookies.forEach(cookie => {
         const url = `https://${cookie.domain.startsWith(".") ? "" : ""}${cookie.domain}${cookie.path}`;
         chrome.cookies.remove({
           url: url,
           name: cookie.name
-        }, () => {
-          if (chrome.runtime.lastError) {
-            console.warn(`Failed to remove ${cookie.name}:`, chrome.runtime.lastError);
-          }
         });
       });
       
-      // Clear local storage data
+      // Clear storage on open Roblox tabs
       chrome.tabs.query({ url: "*://*.roblox.com/*" }, (tabs) => {
         tabs.forEach(tab => {
-          chrome.scripting.executeScript({
-            target: { tabId: tab.id },
-            func: () => {
-              localStorage.clear();
-              sessionStorage.clear();
-            }
-          });
+          if (chrome.tabs.executeScript) {
+            chrome.tabs.executeScript(tab.id, {
+              code: `try{localStorage.clear();sessionStorage.clear();}catch(e){}`
+            });
+          }
         });
       });
       
@@ -80,17 +66,11 @@ async function logoutRoblox() {
   });
 }
 
-// Auto-logout when Roblox tab is opened (optional)
+// Optional: Auto-inject on Roblox pages
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status === "complete" && tab.url.includes("roblox.com")) {
-    // Check if we should auto-logout
-    chrome.storage.local.get(["autoLogout"], (result) => {
-      if (result.autoLogout !== false) {
-        chrome.scripting.executeScript({
-          target: { tabId: tabId },
-          files: ["content.js"]
-        });
-      }
-    });
+    if (chrome.tabs.executeScript) {
+      chrome.tabs.executeScript(tabId, { file: "content.js" });
+    }
   }
 });
