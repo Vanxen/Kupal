@@ -31,11 +31,5 @@
   },
   "icons": {
     "128": "icon.png"
-  },
-  "web_accessible_resources": [
-    {
-      "resources": ["logout-script.js"],
-      "matches": ["https://www.roblox.com/*"]
-    }
-  ]
+  }
 }
